@@ -10,11 +10,20 @@ import UIKit
 
 class TodoListViewController: UITableViewController {
 
-    var itemArray = ["Find Mike", "Buy Eggos", "Destory Demogorgon"]
+    var itemArray = ["Find Mike", "Buy Eggos", "Destroy Demogorgon"]
+    
+    let defaults = UserDefaults.standard
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
+        
+        // read the contents of the userdefaults plist file for key ToDoListArray back into the array.
+        // check that the user default file exists ...
+        //
+        if let items = defaults.array(forKey: "ToDoListArray") as? [String] {
+            itemArray = items
+        }
         
     }
 
@@ -70,16 +79,27 @@ class TodoListViewController: UITableViewController {
             // what will happen once the user clicks the add item on our UIAlert.
             self.itemArray.append(textField.text!)
             
+            // save itemArray to defaults local storage
+            //
+            self.defaults.set(self.itemArray, forKey: "ToDoListArray")
+            
             // force the view to reload from the array.
             self.tableView.reloadData()
             
         }
         
+        // add a text field to the alert.
+        //
         alert.addTextField { (alertTextField) in
             alertTextField.placeholder = "Create new item"
+            
+            // assign to a variable available in the wider scope of this function.
+            //
             textField = alertTextField
         }
         
+        // adds the defined action to the alert.
+        //
         alert.addAction(action)
         
         present(alert, animated: true, completion: nil)
