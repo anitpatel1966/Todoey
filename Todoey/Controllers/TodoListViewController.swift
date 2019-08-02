@@ -11,32 +11,17 @@ import UIKit
 class TodoListViewController: UITableViewController {
 
     var itemArray = [Item]()
-    
-    let defaults = UserDefaults.standard
-    
+
+    // get the filepath for the user document directory.
+    // create a path to our own plist file Items.plist
+    //
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
-
-        let newItem = Item()
-        newItem.title = "Find Mike"
-        itemArray.append(newItem)
-        
-        let newItem2 = Item()
-        newItem2.title = "Buy Eggos"
-        itemArray.append(newItem2)
-
-        let newItem3 = Item()
-        newItem3.title = "Destroy Demogorgon"
-        itemArray.append(newItem3)
-        
-        // read the contents of the userdefaults plist file for key ToDoListArray back into the array.
-        // check that the user default file exists ...
-        //
-        if let items = defaults.array(forKey: "ToDoListArray") as? [Item] {
-            itemArray = items
-        }
-        
+                
+        loadItems()
     }
 
     //Mark - Tableview Datasource Methods
@@ -78,10 +63,11 @@ class TodoListViewController: UITableViewController {
         //
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         
-        // force the view to reload the data by passing the dataSource delegate method again.
+        // save the model to the plist file which will also...
+        // force the view to reload the data by calling the dataSource delegate method again.
         //
-        tableView.reloadData()
-        
+        self.saveItems()
+
         tableView.deselectRow(at: indexPath, animated: true)
 
     }
@@ -105,12 +91,7 @@ class TodoListViewController: UITableViewController {
             newItem.title = textField.text!
             self.itemArray.append(newItem)
             
-            // save itemArray to defaults local storage
-            //
-            self.defaults.set(self.itemArray, forKey: "ToDoListArray")
-            
-            // force the view to reload from the array.
-            self.tableView.reloadData()
+            self.saveItems()
             
         }
         
@@ -132,6 +113,37 @@ class TodoListViewController: UITableViewController {
         
     }
     
+    //MARK - Model manipulation methods
+    
+    func saveItems() {
+        //
+        // save itemArray to plist:
+        //
+        // 1) create an encoder object
+        // 2) encode our item array using the encoder
+        let encoder = PropertyListEncoder()
+        do {
+            let data = try encoder.encode(itemArray)
+            try data.write(to: dataFilePath!)
+        } catch {
+            print ("Error encoding itemArray \(error)")
+        }
+        
+        // force the view to reload from the array.
+        tableView.reloadData()
+    }
 
+    // load the data from the plist file back into the data model.
+    func loadItems() {
+
+        if let data = try? Data(contentsOf: dataFilePath!) {
+            let decoder = PropertyListDecoder()
+            do {
+                itemArray = try decoder.decode([Item].self, from: data)
+            } catch {
+                print ("Error decoding into itemArray \(error)")
+            }
+        }
+    }
 }
 

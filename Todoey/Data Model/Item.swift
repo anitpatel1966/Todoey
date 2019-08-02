@@ -8,7 +8,11 @@
 
 import Foundation
 
-class Item {
+// mark the class as conforming to Codable (ie encodable & decodable protocols).
+// all of the classes properties must be of standard data-types
+// cannot include class objects.
+//
+class Item : Codable {
     
     var title : String = ""
     var done : Bool = false
