@@ -8,8 +8,9 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
-class TodoListViewController: UITableViewController {
+class TodoListViewController: SwipeTableViewController {
     
     // initialise a new Realm. Forcing the try is OK in this instance
     //
@@ -32,11 +33,14 @@ class TodoListViewController: UITableViewController {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
         
-        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
+//        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
 
 //        not required as I set the view controller delegate in the storyboard.
 //
 //        searchBar.delegate = self
+        
+        tableView.separatorStyle = .none
+
         
     }
 
@@ -44,11 +48,19 @@ class TodoListViewController: UITableViewController {
     //TODO: Declare cellForRowAtIndexPath here:
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "TodoItemCell", for: indexPath)
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         if let item = todoItems?[indexPath.row] {
             
             cell.textLabel?.text = item.title
+            
+            // We can force unwrap 'todoItems!.count' because we are in an if let statement, and so
+            // we know that todoItems contains data.
+            //
+            if let colour = UIColor(hexString: selectedCategory!.colour)?.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(todoItems!.count)) {
+                cell.backgroundColor = colour
+                cell.textLabel?.textColor = ContrastColorOf(colour, returnFlat: true)
+            }
             
             // set the cells accessory based on the done property of the current
             // row.
@@ -156,6 +168,22 @@ class TodoListViewController: UITableViewController {
         tableView.reloadData()
 
     }
+    
+    //MARK: - Delete Data from Swipe
+    override func updateModel(at indexPath: IndexPath) {
+        
+        if let item = todoItems?[indexPath.row] {
+            do {
+                try realm.write {
+                    realm.delete(item)
+                }
+            } catch {
+                print ("Error deleting item, \(error)")
+            }
+        }
+        
+    }
+
 }
 
 //MARK: - Search bar methods
